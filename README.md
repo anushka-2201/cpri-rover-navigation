@@ -35,8 +35,8 @@ My approach to solving this autonomous navigation challenge evolved through mult
 
 ---
 
-## 📁 Repository Structure (Work in Progress)
-*(Note: Code modules are currently being structured into these directories)*
+## 📁 Repository Structure 
+*(Note: Code modules are currently being added and structured based on the further progress)*
 
 ```text
 ├── notebooks/
