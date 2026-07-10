@@ -9,7 +9,6 @@
 ## 📌 Project Overview
 This project focuses on developing a robust, vision-based autonomous navigation system for a rover capable of real-time path perception and navigation. The primary objective is to create a perception pipeline that accurately identifies drivable boundaries and navigates complex, unstructured environments by processing monocular camera feeds[cite: 2].
 
----
 
 ## 🚀 Technical Journey & Implementation Phases
 
@@ -34,6 +33,7 @@ My approach to solving this autonomous navigation challenge evolved through mult
 *   **Control Integration:** The pipeline processes these binary masks to extract a dynamic centerline in real-time, effectively translating visual perception into actionable steering parameters for the rover's path-following controller[cite: 2].
 
 ---
+
 
 ## 📁 Repository Structure 
 *(Note: Code modules are currently being added and structured based on the further progress)*
