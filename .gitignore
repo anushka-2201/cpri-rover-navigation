@@ -5,14 +5,11 @@
 *.h5
 *.ckpt
 models/**/weights/
+!models/yolov8-navigation/weights/
+!models/yolov8-navigation/weights/best.pt
 
-# Full-length videos (keep only short samples committed directly)
-data/videos/input/*.mp4
-data/videos/input/*.avi
-data/videos/output/**/*.mp4
-data/videos/output/**/*.avi
-!data/videos/input/*_sample.mp4
-!data/videos/output/**/*_sample.mp4
+# Generated output videos (regenerate locally, don't commit)
+data/sample_outputs/
 
 # Python
 __pycache__/
