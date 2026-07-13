@@ -1,102 +1,63 @@
-"""
-Run Ultra-Fast-Lane-Detection (ResNet-18, pretrained on TuSimple) on a video file.
-
-Cleaned, reusable version of the original Colab notebook — same steps, but as a
-single script instead of sequential cells:
-  1. patch the vendored inference library's known ragged-array numpy bug
-  2. load the model + weights
-  3. run frame-by-frame inference
-  4. write an annotated output video
-
-Usage:
-    python run_inference.py --video path/to/input.mp4 \
-                             --weights weights/tusimple_18.pth \
-                             --output path/to/output.mp4 \
-                             --model-type tusimple
-"""
-
 import argparse
-import os
 import sys
-
+import os
 import cv2
-from tqdm import tqdm
+from moviepy.editor import ImageSequenceClip
 
-LIB_DIR = os.path.join(os.path.dirname(__file__), "ultrafastLaneDetector")
+# Add the src directory to the system path to allow module imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
+try:
+    # Import the core detection logic (Ensure this file exists in the src/resnet18_segmentation/ directory)
+    from resnet18_segmentation.ultrafastLaneDetector import UltrafastLaneDetector, ModelType
+except ImportError:
+    print("[ERROR] ultrafastLaneDetector module not found. Please check the src/resnet18_segmentation/ directory.")
+    sys.exit(1)
 
-def patch_ragged_array_bug():
-    """
-    The vendored library returns `np.array(lanes_points)` / `np.array(lanes_detected)`
-    without dtype=object, which raises a ValueError on newer numpy versions when the
-    per-lane arrays have inconsistent lengths. Patch it in place, once.
-    """
-    target_file = os.path.join(LIB_DIR, "ultrafastLaneDetector.py")
-    if not os.path.exists(target_file):
-        raise FileNotFoundError(
-            f"Could not find {target_file}. Did you vendor the library? See README.md setup steps."
-        )
+def process_video(video_path, model_path, output_path):
+    print("[INFO] Loading ResNet-18 Model...")
+    # Set use_gpu=True if CUDA/GPU is avlable, otherwise keep it False
+    lane_detector = UltrafastLaneDetector(model_path, ModelType.TUSIMPLE, use_gpu=False) 
 
-    with open(target_file, "r") as f:
-        code = f.read()
-
-    old = "return np.array(lanes_points), np.array(lanes_detected)"
-    new = "return np.array(lanes_points, dtype=object), np.array(lanes_detected, dtype=object)"
-
-    if old in code:
-        code = code.replace(old, new)
-        with open(target_file, "w") as f:
-            f.write(code)
-        print("Patched ragged-array bug in ultrafastLaneDetector.py")
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--video", required=True, help="Path to input video")
-    parser.add_argument("--weights", required=True, help="Path to tusimple_18.pth")
-    parser.add_argument("--output", required=True, help="Path to write annotated output video")
-    parser.add_argument(
-        "--model-type", default="tusimple", choices=["tusimple", "culane"],
-        help="Which pretrained config the weights correspond to",
-    )
-    args = parser.parse_args()
-
-    patch_ragged_array_bug()
-
-    sys.path.append(os.path.dirname(__file__))
-    from ultrafastLaneDetector import UltrafastLaneDetector, ModelType
-
-    model_type = ModelType.TUSIMPLE if args.model_type == "tusimple" else ModelType.CULANE
-    print("Loading model...")
-    lane_detector = UltrafastLaneDetector(args.weights, model_type)
-
-    cap = cv2.VideoCapture(args.video)
+    print(f"[INFO] Opening video file: {video_path}")
+    cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        raise RuntimeError(f"Could not open video: {args.video}")
+        print("[ERROR] Could not open the video file.")
+        return
 
-    fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    frames = []
+    frame_count = 0
 
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    writer = cv2.VideoWriter(args.output, fourcc, fps, (width, height))
-
-    print(f"Running inference on {args.video} ({total_frames} frames)...")
-    with tqdm(total=total_frames) as pbar:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            output_frame = lane_detector.detect_lanes(frame)
-            writer.write(output_frame)
-            pbar.update(1)
+    print("[INFO] Starting frame processing...")
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        # Perform AI-based lane detection
+        output_img = lane_detector.detect_lanes(frame)
+        
+        # Convert BGR to RGB (Required by MoviePy for correct color mapping)
+        frames.append(cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB))
+        
+        frame_count += 1
+        if frame_count % 100 == 0:
+            print(f"       Processed {frame_count} frames...")
 
     cap.release()
-    writer.release()
-    print(f"Done. Output written to {args.output}")
 
+    print("[INFO] Saving corruption-free video using MoviePy...")
+    clip = ImageSequenceClip(frames, fps=fps)
+    clip.write_videofile(output_path, codec='libx264', audio=False)
+    
+    print(f"[SUCCESS] Video successfully saved at: {output_path}")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="ResNet-18 Lane Detection Inference Script")
+    parser.add_argument("--source", type=str, required=True, help="Path to the input video file")
+    parser.add_argument("--weights", type=str, required=True, help="Path to the ResNet-18 model weights (.pth)")
+    parser.add_argument("--output", type=str, default="data/sample_outputs/resnet_result.mp4", help="Path to save the output video")
+    
+    args = parser.parse_args()
+    process_video(args.source, args.weights, args.output)
