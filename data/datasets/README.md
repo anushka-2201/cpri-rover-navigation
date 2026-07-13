@@ -19,6 +19,4 @@ Both pretrained models were trained on **TuSimple** — this project uses the pr
 
 `models/opencv-lane-detection/camera_cal/` — chessboard images used for OpenCV camera calibration. These are small (a few KB each) and fine to commit directly.
 
-## Full-length input/output videos
-
-Full videos are hosted externally (Google Drive folder — add link here) and only short representative clips (a few seconds, <10MB) are committed under `data/videos/input/` and `data/videos/output/<method>/` for quick testing and for the README GIFs.
+Full videos are hosted externally https://drive.google.com/drive/folders/1GxR3JKEmpcuys9-uKjbMnamZU6IxpULF?usp=sharing and only short representative clips (a few seconds, <10MB) are committed under `data/sample_inputs/` and `data/sample_outputs/` for quick testing and for the README GIFs.
