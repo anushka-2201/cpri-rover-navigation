@@ -2,7 +2,7 @@ import argparse
 import sys
 import os
 import cv2
-from moviepy.editor import ImageSequenceClip
+from moviepy import ImageSequenceClip
 
 # The ultrafastLaneDetector library now lives right next to this script
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
