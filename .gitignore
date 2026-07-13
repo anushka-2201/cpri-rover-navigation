@@ -1,0 +1,32 @@
+# Model weights (large binaries — see data/datasets/README.md for download links)
+*.pth
+*.pt
+*.onnx
+*.h5
+*.ckpt
+models/**/weights/
+
+# Full-length videos (keep only short samples committed directly)
+data/videos/input/*.mp4
+data/videos/input/*.avi
+data/videos/output/**/*.mp4
+data/videos/output/**/*.avi
+!data/videos/input/*_sample.mp4
+!data/videos/output/**/*_sample.mp4
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Build artifacts (CLRNet compiled ops etc.)
+build/
+*.so
